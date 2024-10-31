@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Crypto Prices</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <style>
+        #loader {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+<div class="container mt-5">
+    <h1 class="mb-4">Crypto Prices</h1>
+    <div id="loader" class="spinner-border text-primary" role="status">
+        <span class="sr-only">Loading...</span>
+    </div>
+    <div class="row" id="crypto-prices"></div>
+    <button id="clear-cache" class="btn btn-danger mt-4">Clear Cache</button>
+</div>
+
+<script>
+    async function fetchCryptoPrices() {
+        const loader = document.getElementById('loader');
+        const pricesDiv = document.getElementById('crypto-prices');
+
+        loader.style.display = 'block';
+        pricesDiv.innerHTML = '';
+
+        try {
+            const response = await fetch('/api/crypto/crypto-prices');
+            const data = await response.json();
+
+            loader.style.display = 'none';
+
+            for (const [key, value] of Object.entries(data)) {
+                const colDiv = document.createElement('div');
+                colDiv.className = 'col-md-4 mb-4';
+
+                const cardDiv = document.createElement('div');
+                cardDiv.className = 'card h-100';
+
+                const cardBody = document.createElement('div');
+                cardBody.className = 'card-body';
+
+                const title = document.createElement('h5');
+                title.className = 'card-title';
+                title.textContent = `${key.charAt(0).toUpperCase() + key.slice(1)}`;
+
+                const price = document.createElement('p');
+                price.className = 'card-text';
+                price.textContent = `Price: $${value.usd}`;
+
+                cardBody.appendChild(title);
+                cardBody.appendChild(price);
+                cardDiv.appendChild(cardBody);
+                colDiv.appendChild(cardDiv);
+                pricesDiv.appendChild(colDiv);
+            }
+        } catch (error) {
+            console.error('Error fetching crypto prices:', error);
+            loader.style.display = 'none';
+            pricesDiv.innerHTML = '<p class="text-danger">Error fetching crypto prices</p>';
+        }
+    }
+
+    async function clearCache() {
+        try {
+            const response = await fetch('/api/crypto/crypto-prices/cache', {
+                method: 'DELETE',
+            });
+
+            const result = await response.json();
+            alert(result.message);
+            await fetchCryptoPrices(); // Обновите курсы после очистки кэша
+        } catch (error) {
+            console.error('Error clearing cache:', error);
+            alert('Error clearing cache');
+        }
+    }
+
+    document.getElementById('clear-cache').addEventListener('click', clearCache);
+
+    fetchCryptoPrices();
+</script>
+</body>
+</html>
